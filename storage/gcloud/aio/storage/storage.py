@@ -4,6 +4,8 @@ from urllib.parse import quote
 import aiohttp
 from gcloud.aio.auth import Token
 from gcloud.aio.storage.bucket import Bucket
+import inspect
+
 try:
     import ujson as json
 except ModuleNotFoundError:
@@ -84,7 +86,13 @@ class Storage:
         # https://cloud.google.com/storage/docs/json_api/v1/how-tos/simple-upload
         token = await self.token.get()
         url = f'{STORAGE_UPLOAD_API_ROOT}/{bucket}/o'
-        headers = headers or {}
+
+        headers = { k.lower() : v for k, v in (headers or {}).items() }
+        headers.update({
+            'Accept': 'application/json',
+            'Authorization': f'Bearer {token}',
+            'Content-Type': 'application/json',
+        })
 
         params = {
             'name': object_name,
@@ -95,16 +103,17 @@ class Storage:
             file_data = ''
         if isinstance(file_data, bytes):
             file_data = file_data.decode('utf-8')
-        if not isinstance(file_data, str):
+        if not isinstance(file_data, str) and not inspect.isasyncgen(file_data):
             file_data = json.dumps(file_data)
 
-        content_length = str(len(file_data) if file_data else 0)
-        headers.update({
-            'Accept': 'application/json',
-            'Authorization': f'Bearer {token}',
-            'Content-Length': content_length,
-            'Content-Type': 'application/json',
-        })
+        # When reading from async generators we don't know length upfront
+        # behind scenes aiohttp uses chunked transfer encoding for async generators
+        # and Google Cloud API will tolerate missing content-length header
+        if not inspect.isasyncgen(file_data) \
+           and 'content-length' not in headers:
+            content_length = str(len(file_data) if file_data else 0)
+            headers['content-length'] = content_length
+
 
         if not self.session:
             self.session = aiohttp.ClientSession(conn_timeout=10,
