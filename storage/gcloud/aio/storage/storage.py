@@ -89,9 +89,8 @@ class Storage:
 
         headers = { k.lower() : v for k, v in (headers or {}).items() }
         headers.update({
-            'Accept': 'application/json',
-            'Authorization': f'Bearer {token}',
-            'Content-Type': 'application/json',
+            'accept': 'application/json',
+            'authorization': f'Bearer {token}',
         })
 
         params = {
@@ -113,6 +112,10 @@ class Storage:
            and 'content-length' not in headers:
             content_length = str(len(file_data) if file_data else 0)
             headers['content-length'] = content_length
+        else:
+            # setup default type
+            headers['content-type'] = 'application/json'
+
 
 
         if not self.session:
