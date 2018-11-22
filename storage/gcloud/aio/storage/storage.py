@@ -102,8 +102,10 @@ class Storage:
             file_data = ''
         if isinstance(file_data, bytes):
             file_data = file_data.decode('utf-8')
+            headers['content-type'] = headers.get('content-type','application/octet-stream')
         if not isinstance(file_data, str) and not inspect.isasyncgen(file_data):
             file_data = json.dumps(file_data)
+            headers['content-type'] = 'application/json'
 
         # When reading from async generators we don't know length upfront
         # behind scenes aiohttp uses chunked transfer encoding for async generators
@@ -112,9 +114,7 @@ class Storage:
            and 'content-length' not in headers:
             content_length = str(len(file_data) if file_data else 0)
             headers['content-length'] = content_length
-        else:
             # setup default type
-            headers['content-type'] = 'application/json'
 
 
 
