@@ -19,7 +19,7 @@ GCLOUD_TOKEN_DURATION = 3600
 
 class Token(object):
     # pylint: disable=too-many-instance-attributes
-    def __init__(self, project: str, service_file: Any,
+    def __init__(self, project: str, service_file: typing.Any,
                  session: aiohttp.ClientSession = None,
                  scopes: typing.List[str] = None):
         self.project = project
