@@ -19,15 +19,19 @@ GCLOUD_TOKEN_DURATION = 3600
 
 class Token(object):
     # pylint: disable=too-many-instance-attributes
-    def __init__(self, project: str, service_file: str,
+    def __init__(self, project: str, service_file: Any,
                  session: aiohttp.ClientSession = None,
                  scopes: typing.List[str] = None):
         self.project = project
-
-        with open(service_file, 'r') as f:
-            service_data_str = f.read()
-
-        self.service_data = json.loads(service_data_str)
+        if isinstance(service_file, dict):
+            self.service_data = service_file
+        elif isinstance(service_file, str):
+            with open(service_file, 'r') as f:
+                self.service_data = json.load(f)
+        elif hasattr(service_file, 'read'):
+            self.service_data = json.load(service_file)
+        else:
+            raise ValueError('Unable to initialize token with given service_file')
 
         self.session = session
         self.scopes = scopes or []
