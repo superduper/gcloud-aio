@@ -25,11 +25,11 @@ class Token(object):
         self.project = project
         if isinstance(service_file, dict):
             self.service_data = service_file
+        elif hasattr(service_file, 'read'):
+            self.service_data = json.load(service_file)
         elif isinstance(service_file, str):
             with open(service_file, 'r') as f:
                 self.service_data = json.load(f)
-        elif hasattr(service_file, 'read'):
-            self.service_data = json.load(service_file)
         else:
             raise ValueError('Unable to initialize token with given service_file')
 
